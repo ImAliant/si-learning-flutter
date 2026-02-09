@@ -36,8 +36,8 @@ class AppDatabase extends _$AppDatabase {
             .toList();
 
     await transaction(() async {
-      await _ensureCategory('Random');
-      await _ensureCategory('Help');
+      await _ensureCategory('Aléatoire');
+      await _ensureCategory('Révision');
 
       for (final category in categories) {
         final categoryId = await _ensureCategory(category.categoryName);
