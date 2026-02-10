@@ -31,7 +31,7 @@ class LearnCategoriesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CategoryListPage(
+    return LearnCategoryListPage(
       title: 'Learn',
       onCategoryTap: (context, category) {
         Navigator.of(
@@ -67,6 +67,38 @@ class CategoryListPage extends ConsumerWidget {
   }
 }
 
+class LearnCategoryListPage extends ConsumerWidget {
+  const LearnCategoryListPage({
+    super.key,
+    required this.title,
+    required this.onCategoryTap,
+  });
+
+  final String title;
+  final CategoryTapCallback onCategoryTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final categories = categoriesAsync.maybeWhen(
+      data: (categories) => categories,
+      orElse: () => <Category>[],
+    );
+    final learnCategories =
+        categories
+            .where(
+              (category) =>
+                  category.name != 'Révision' && category.name != 'Aléatoire',
+            )
+            .toList();
+
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: LearnUI(categories: learnCategories, onCategoryTap: onCategoryTap),
+    );
+  }
+}
+
 class HomeUI extends StatelessWidget {
   final List<Category> categories;
   final CategoryTapCallback onCategoryTap;
@@ -93,6 +125,49 @@ class HomeUI extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class LearnUI extends StatelessWidget {
+  final List<Category> categories;
+  final CategoryTapCallback onCategoryTap;
+
+  const LearnUI({
+    super.key,
+    required this.categories,
+    required this.onCategoryTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (categories.isEmpty) {
+      return const Center(child: Text('No categories yet.'));
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        return Card(
+          color: Theme.of(context).colorScheme.surfaceVariant,
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            leading: const Icon(Icons.menu_book_outlined),
+            title: Text(
+              category.name,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => onCategoryTap(context, category),
+          ),
+        );
+      },
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemCount: categories.length,
     );
   }
 }
