@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../features/quiz/presentation/pages/home_page.dart';
+import '../features/quiz/presentation/pages/root_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -13,7 +13,7 @@ class App extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const RootPage(),
     );
   }
 }
