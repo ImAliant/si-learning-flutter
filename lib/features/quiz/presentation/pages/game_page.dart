@@ -24,6 +24,8 @@ class _GamePageState extends ConsumerState<GamePage> {
   int _currentIndex = 0;
   int _timeLeft = _maxSeconds;
   bool _isComplete = false;
+  bool? _isAnswerCorrect;
+  final Map<int, bool> _revisionOverrides = {};
 
   @override
   void dispose() {
@@ -63,37 +65,49 @@ class _GamePageState extends ConsumerState<GamePage> {
     setState(() {
       _currentIndex += 1;
       _timeLeft = _maxSeconds;
+      _isAnswerCorrect = null;
     });
     _answerController.clear();
     _startTimer(totalQuestions);
   }
 
-  Future<void> _markForRevision(Question question) async {
-    if (question.needHelp) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Already in "Révision".')));
-      return;
-    }
+  String _normalizeAnswer(String input) {
+    return input.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  }
 
-    await ref
-        .read(updateQuestionProvider)
-        .call(
-          Question(
-            id: question.id,
-            question: question.question,
-            answer: question.answer,
-            imageKey: question.imageKey,
-            categoryId: question.categoryId,
-            needHelp: true,
-          ),
-        );
+  void _validateAnswer(Question question) {
+    final userAnswer = _normalizeAnswer(_answerController.text);
+    final correctAnswer = _normalizeAnswer(question.answer);
+    setState(() {
+      _isAnswerCorrect = userAnswer.isNotEmpty && userAnswer == correctAnswer;
+    });
+  }
+
+  Future<void> _toggleRevision(Question question, bool isRevision) async {
+    final updated = Question(
+      id: question.id,
+      question: question.question,
+      answer: question.answer,
+      imageKey: question.imageKey,
+      categoryId: question.categoryId,
+      needHelp: !isRevision,
+    );
+
+    setState(() {
+      _revisionOverrides[question.id] = !isRevision;
+    });
+
+    await ref.read(updateQuestionProvider).call(updated);
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Added to "Révision".')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          !isRevision ? 'Added to "Révision".' : 'Removed from "Révision".',
+        ),
+      ),
+    );
   }
 
   @override
@@ -117,7 +131,7 @@ class _GamePageState extends ConsumerState<GamePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.check_circle_outline, size: 48),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
                   const Text('All questions completed.'),
                   const SizedBox(height: 12),
                   TextButton(
@@ -190,28 +204,24 @@ class _GamePageState extends ConsumerState<GamePage> {
                     border: OutlineInputBorder(),
                   ),
                   textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _goToNextQuestion(questions.length),
+                  onSubmitted: (_) => _validateAnswer(question),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _markForRevision(question),
-                        icon: const Icon(Icons.bookmark_add_outlined),
-                        label: const Text('Révision'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _goToNextQuestion(questions.length),
-                        icon: const Icon(Icons.skip_next),
-                        label: const Text('Skip'),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () => _validateAnswer(question),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Validate'),
                 ),
+                if (_isAnswerCorrect != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    _isAnswerCorrect! ? 'Correct!' : 'Wrong answer.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: _isAnswerCorrect! ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ],
             ),
           );
@@ -220,6 +230,53 @@ class _GamePageState extends ConsumerState<GamePage> {
         error: (error, stackTrace) {
           return Center(child: Text('Failed to load questions: $error'));
         },
+      ),
+      bottomNavigationBar: questionsAsync.maybeWhen(
+        data: (questions) {
+          if (questions.isEmpty || _isComplete) {
+            return null;
+          }
+
+          final safeIndex = _currentIndex.clamp(0, questions.length - 1);
+          final question = questions[safeIndex];
+          final isRevision =
+              _revisionOverrides[question.id] ?? question.needHelp;
+
+          return SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                8,
+                16,
+                8 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _toggleRevision(question, isRevision),
+                      icon: Icon(
+                        isRevision
+                            ? Icons.bookmark
+                            : Icons.bookmark_add_outlined,
+                      ),
+                      label: const Text('Révision'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _goToNextQuestion(questions.length),
+                      icon: const Icon(Icons.skip_next),
+                      label: const Text('Skip'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+        orElse: () => null,
       ),
     );
   }
