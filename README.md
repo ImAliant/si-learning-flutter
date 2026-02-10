@@ -1,16 +1,26 @@
 # si_learning_flutter
 
-A new Flutter project.
+Flutter quiz application with local SQLite persistence.
 
-## Getting Started
+## Implemented Features
+- Material 3 app shell with title "SI Learning" and a root page that provides Play and Learn tabs via bottom navigation.
+- Category listing backed by Riverpod stream providers and Drift database streams.
+- Local database (Drift) with Categories and Questions tables, plus indices on categoryId and needHelp.
+- Database prepopulation from assets/questions.json on first create, plus two fixed categories for random and revision modes.
+- Play mode (GamePage) with a 15s timer per question, text answer input, skip, mark for revision, and restart when complete.
+- Learn mode (QuizPage) showing question and answer list; revision category allows removal from revision.
+- Category UI includes a featured full-width card followed by grid-like rows.
 
-This project is a starting point for a Flutter application.
+## Data and Architecture
+- Domain entities and use cases, repository interface, and repository implementation backed by a local datasource and Drift DAO.
+- Riverpod providers for database, repository, use cases, and data streams.
 
-A few resources to get you started if this is your first Flutter project:
+## Tests
+- test/widget_test.dart still contains the default Flutter counter template and does not match the current app widget tree.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Improvements
+- Replace the template widget test with tests for category loading, play flow, and revision toggling.
+- Wire up routing and theming through router.dart and theme.dart or remove unused files.
+- Remove or integrate the unused PlayQuizPage and the duplicate presentation Category model.
+- Add answer validation and scoring for play mode instead of only skip or advance.
+- Add database migration handling and a seed refresh strategy beyond initial creation.
