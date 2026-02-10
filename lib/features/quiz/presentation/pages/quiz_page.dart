@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:si_learning_flutter/features/quiz/domain/entities/question.dart';
 
 import '../../domain/entities/category.dart';
 import '../providers/quiz_providers.dart';
@@ -11,7 +12,11 @@ class QuizPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final questionsAsync = ref.watch(questionsByCategoryProvider(category.id));
+    final isRevision = category.name == 'Révision';
+    final questionsAsync =
+        isRevision
+            ? ref.watch(questionsNeedingHelpProvider)
+            : ref.watch(questionsByCategoryProvider(category.id));
 
     return Scaffold(
       appBar: AppBar(title: Text(category.name)),
@@ -40,6 +45,38 @@ class QuizPage extends ConsumerWidget {
                         question.answer,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
+                      if (isRevision) ...[
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: () async {
+                              await ref
+                                  .read(updateQuestionProvider)
+                                  .call(
+                                    Question(
+                                      id: question.id,
+                                      question: question.question,
+                                      answer: question.answer,
+                                      imageKey: question.imageKey,
+                                      categoryId: question.categoryId,
+                                      needHelp: false,
+                                    ),
+                                  );
+
+                              if (!context.mounted) return;
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Removed from "Révision".'),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.bookmark_remove_outlined),
+                            label: const Text('Remove'),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

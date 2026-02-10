@@ -85,12 +85,7 @@ class LearnCategoryListPage extends ConsumerWidget {
       orElse: () => <Category>[],
     );
     final learnCategories =
-        categories
-            .where(
-              (category) =>
-                  category.name != 'Révision' && category.name != 'Aléatoire',
-            )
-            .toList();
+        categories.where((category) => category.name != 'Aléatoire').toList();
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
