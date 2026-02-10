@@ -86,6 +86,7 @@ class _GamePageState extends ConsumerState<GamePage> {
   void _validateAnswer(Question question) {
     final userAnswer = _normalizeAnswer(_answerController.text);
     final correctAnswer = _normalizeAnswer(question.answer);
+    _timer?.cancel();
     setState(() {
       _isAnswerCorrect = userAnswer.isNotEmpty && userAnswer == correctAnswer;
     });
@@ -289,7 +290,9 @@ class _GamePageState extends ConsumerState<GamePage> {
                     ),
                   ),
                 ],
-                if (_timerDone || _answerRevealed) ...[
+                if (_timerDone ||
+                    _answerRevealed ||
+                    _isAnswerCorrect != null) ...[
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () => _goToNextQuestion(questions.length),
