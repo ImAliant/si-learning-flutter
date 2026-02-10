@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:si_learning_flutter/features/quiz/domain/entities/category.dart';
 import 'package:si_learning_flutter/features/quiz/presentation/models/category_card.dart';
+import 'package:si_learning_flutter/features/quiz/presentation/pages/quiz_page.dart';
 
 import '../providers/quiz_providers.dart';
 
@@ -80,7 +81,9 @@ class FullWidthCategory extends StatelessWidget {
         category: category,
         color: Colors.orange,
         onTap: () {
-          // Navigator.push(...)
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => QuizPage(category: category)),
+          );
         },
       ),
     );
@@ -104,7 +107,11 @@ class CategoryRow extends StatelessWidget {
                   category: category,
                   color: Colors.blue,
                   onTap: () {
-                    // Navigator.push(...)
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => QuizPage(category: category),
+                      ),
+                    );
                   },
                 ),
               ),
