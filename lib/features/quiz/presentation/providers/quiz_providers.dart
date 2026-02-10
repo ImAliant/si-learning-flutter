@@ -8,6 +8,8 @@ import '../../domain/entities/question.dart';
 import '../../domain/repositories/quiz_repository.dart';
 import '../../domain/usecases/get_categories.dart';
 import '../../domain/usecases/get_questions_by_category.dart';
+import '../../domain/usecases/get_questions_needing_help.dart';
+import '../../domain/usecases/update_question.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
@@ -33,6 +35,16 @@ final getQuestionsByCategoryProvider = Provider<GetQuestionsByCategory>((ref) {
   return GetQuestionsByCategory(ref.watch(quizRepositoryProvider));
 });
 
+final getQuestionsNeedingHelpProvider = Provider<GetQuestionsNeedingHelp>((
+  ref,
+) {
+  return GetQuestionsNeedingHelp(ref.watch(quizRepositoryProvider));
+});
+
+final updateQuestionProvider = Provider<UpdateQuestion>((ref) {
+  return UpdateQuestion(ref.watch(quizRepositoryProvider));
+});
+
 final categoriesStreamProvider = StreamProvider<List<Category>>((ref) {
   return ref.watch(getCategoriesProvider).call();
 });
@@ -42,4 +54,8 @@ final questionsByCategoryProvider = StreamProvider.family<List<Question>, int>((
   categoryId,
 ) {
   return ref.watch(getQuestionsByCategoryProvider).byId(categoryId);
+});
+
+final questionsNeedingHelpProvider = StreamProvider<List<Question>>((ref) {
+  return ref.watch(getQuestionsNeedingHelpProvider).call();
 });

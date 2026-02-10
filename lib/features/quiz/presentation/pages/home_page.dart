@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:si_learning_flutter/features/quiz/domain/entities/category.dart';
 import 'package:si_learning_flutter/features/quiz/presentation/models/category_card.dart';
-import 'package:si_learning_flutter/features/quiz/presentation/pages/play_quiz_page.dart';
+import 'package:si_learning_flutter/features/quiz/presentation/pages/game_page.dart';
 import 'package:si_learning_flutter/features/quiz/presentation/pages/quiz_page.dart';
 
 import '../providers/quiz_providers.dart';
@@ -18,9 +18,9 @@ class PlayCategoriesPage extends StatelessWidget {
     return CategoryListPage(
       title: 'Play Quiz',
       onCategoryTap: (context, category) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => PlayQuizPage(category: category)),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => GamePage(category: category)));
       },
     );
   }
