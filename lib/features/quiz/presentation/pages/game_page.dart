@@ -25,6 +25,8 @@ class _GamePageState extends ConsumerState<GamePage> {
   int _timeLeft = _maxSeconds;
   bool _isComplete = false;
   bool? _isAnswerCorrect;
+  bool _timerDone = false;
+  bool _answerRevealed = false;
   final Map<int, bool> _revisionOverrides = {};
 
   @override
@@ -37,6 +39,8 @@ class _GamePageState extends ConsumerState<GamePage> {
   void _startTimer(int totalQuestions) {
     _timer?.cancel();
     _timeLeft = _maxSeconds;
+    _timerDone = false;
+    _answerRevealed = false;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
       if (_isComplete) {
@@ -46,7 +50,9 @@ class _GamePageState extends ConsumerState<GamePage> {
       setState(() => _timeLeft -= 1);
       if (_timeLeft <= 0) {
         timer.cancel();
-        _goToNextQuestion(totalQuestions);
+        setState(() {
+          _timerDone = true;
+        });
       }
     });
   }
@@ -66,6 +72,8 @@ class _GamePageState extends ConsumerState<GamePage> {
       _currentIndex += 1;
       _timeLeft = _maxSeconds;
       _isAnswerCorrect = null;
+      _timerDone = false;
+      _answerRevealed = false;
     });
     _answerController.clear();
     _startTimer(totalQuestions);
@@ -80,6 +88,13 @@ class _GamePageState extends ConsumerState<GamePage> {
     final correctAnswer = _normalizeAnswer(question.answer);
     setState(() {
       _isAnswerCorrect = userAnswer.isNotEmpty && userAnswer == correctAnswer;
+    });
+  }
+
+  void _showAnswer() {
+    _timer?.cancel();
+    setState(() {
+      _answerRevealed = true;
     });
   }
 
@@ -139,6 +154,9 @@ class _GamePageState extends ConsumerState<GamePage> {
                       setState(() {
                         _currentIndex = 0;
                         _isComplete = false;
+                        _isAnswerCorrect = null;
+                        _timerDone = false;
+                        _answerRevealed = false;
                       });
                       _answerController.clear();
                       _startTimer(questions.length);
@@ -199,19 +217,37 @@ class _GamePageState extends ConsumerState<GamePage> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _answerController,
+                  enabled: !_timerDone,
                   decoration: const InputDecoration(
                     labelText: 'Your answer',
                     border: OutlineInputBorder(),
                   ),
                   textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _validateAnswer(question),
+                  onSubmitted: (_) {
+                    if (!_timerDone) _validateAnswer(question);
+                  },
                 ),
                 const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: () => _validateAnswer(question),
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Validate'),
-                ),
+                if (!_timerDone)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _validateAnswer(question),
+                          icon: const Icon(Icons.check_circle_outline),
+                          label: const Text('Validate'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _answerRevealed ? null : _showAnswer,
+                          icon: const Icon(Icons.visibility),
+                          label: const Text('Show answer'),
+                        ),
+                      ),
+                    ],
+                  ),
                 if (_isAnswerCorrect != null) ...[
                   const SizedBox(height: 8),
                   Text(
@@ -220,6 +256,45 @@ class _GamePageState extends ConsumerState<GamePage> {
                       color: _isAnswerCorrect! ? Colors.green : Colors.red,
                       fontWeight: FontWeight.w600,
                     ),
+                  ),
+                ],
+                if (_answerRevealed || _timerDone) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Correct answer:',
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(color: Colors.blue.shade800),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          question.answer,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(
+                            color: Colors.blue.shade900,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (_timerDone || _answerRevealed) ...[
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => _goToNextQuestion(questions.length),
+                    icon: const Icon(Icons.arrow_forward),
+                    label: const Text('Next'),
                   ),
                 ],
               ],
@@ -261,14 +336,6 @@ class _GamePageState extends ConsumerState<GamePage> {
                             : Icons.bookmark_add_outlined,
                       ),
                       label: const Text('Révision'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _goToNextQuestion(questions.length),
-                      icon: const Icon(Icons.skip_next),
-                      label: const Text('Skip'),
                     ),
                   ),
                 ],
