@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/datasources/quiz_local_datasource.dart';
@@ -6,6 +8,7 @@ import '../../data/repositories/quiz_repository_impl.dart';
 import '../../domain/entities/category.dart';
 import '../../domain/entities/question.dart';
 import '../../domain/repositories/quiz_repository.dart';
+import '../../domain/usecases/get_all_questions.dart';
 import '../../domain/usecases/get_categories.dart';
 import '../../domain/usecases/get_questions_by_category.dart';
 import '../../domain/usecases/get_questions_needing_help.dart';
@@ -43,6 +46,18 @@ final getQuestionsNeedingHelpProvider = Provider<GetQuestionsNeedingHelp>((
 
 final updateQuestionProvider = Provider<UpdateQuestion>((ref) {
   return UpdateQuestion(ref.watch(quizRepositoryProvider));
+});
+
+final getAllQuestionsProvider = Provider<GetAllQuestions>((ref) {
+  return GetAllQuestions(ref.watch(quizRepositoryProvider));
+});
+
+final randomQuestionsProvider = StreamProvider<List<Question>>((ref) {
+  final seed = DateTime.now().millisecondsSinceEpoch;
+  return ref.watch(getAllQuestionsProvider).call().map((questions) {
+    final shuffled = List<Question>.from(questions)..shuffle(Random(seed));
+    return shuffled.take(25).toList();
+  });
 });
 
 final categoriesStreamProvider = StreamProvider<List<Category>>((ref) {

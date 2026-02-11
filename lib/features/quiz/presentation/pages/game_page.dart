@@ -132,6 +132,8 @@ class _GamePageState extends ConsumerState<GamePage> {
     final questionsAsync =
         widget.category.name == 'Révision'
             ? ref.watch(questionsNeedingHelpProvider)
+            : widget.category.name == 'Aléatoire'
+            ? ref.watch(randomQuestionsProvider)
             : ref.watch(questionsByCategoryProvider(widget.category.id));
 
     return Scaffold(
