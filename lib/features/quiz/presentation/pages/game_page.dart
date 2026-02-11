@@ -96,6 +96,7 @@ class _GamePageState extends ConsumerState<GamePage> {
     _timer?.cancel();
     setState(() {
       _answerRevealed = true;
+      _timeLeft = 0;
     });
   }
 
